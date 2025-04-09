@@ -46,5 +46,3 @@ export const getTablesAndColumns = async () => {
 
 	return tables;
 };
-
-console.log(await getTablesAndColumns());

@@ -20,7 +20,7 @@ for (const [tableName, { columns }] of Object.entries(tables)) {
 	);
 	const newTemplate = await convertTemplate(tableName, columns);
 	await createNewTemplate(tableName, newTemplate);
-	indexFile += `import { ${tableName}Router } from "./${tableName.toLowerCase()}/controller";\n`;
+	indexFile += `import ${tableName.charAt(0).toLowerCase()}${tableName.slice(1)}Router from "./${tableName.toLowerCase()}/controller";\n`;
 }
 
 await createNewIndex(tables, indexFile);

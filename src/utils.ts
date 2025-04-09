@@ -112,7 +112,7 @@ export const createNewIndex = async (
 	let newIndexFile = indexFile;
 	newIndexFile += `export const app = new Elysia({ prefix: "/api" })\n`;
 	for (const [tableName] of Object.entries(tables)) {
-		newIndexFile += `.use(${tableName}Router)\n`;
+		newIndexFile += `.use(${tableName.charAt(0).toLowerCase()}${tableName.slice(1)}Router)\n`;
 	}
 	newIndexFile += "export default app;\n";
 	await fs.writeFile(
