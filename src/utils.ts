@@ -1,5 +1,6 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { DESTINATION_FOLDER } from "..";
 
 /**
  * Recursively copies a folder to a new destination.
@@ -90,7 +91,7 @@ export const createNewTemplate = async (
 	newTemplate: string,
 ) => {
 	const newFileName = path.join(
-		"./src/elysia_template/src/routes",
+		`${DESTINATION_FOLDER}/src/routes`,
 		tableName.toLowerCase(),
 		"controller.ts",
 	);
@@ -116,7 +117,7 @@ export const createNewIndex = async (
 	}
 	newIndexFile += "export default app;\n";
 	await fs.writeFile(
-		"./src/elysia_template/src/routes/index.ts",
+		`${DESTINATION_FOLDER}/src/routes/index.ts`,
 		newIndexFile,
 		"utf-8",
 	);

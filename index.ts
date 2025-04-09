@@ -7,7 +7,9 @@ import {
 	createNewTemplate,
 } from "./src/utils";
 
-await copyFolder("./elysia_template", "./src/elysia_template");
+export const DESTINATION_FOLDER = "./src/elysia_template";
+
+await copyFolder("./elysia_template", DESTINATION_FOLDER);
 
 const tables = await getTablesAndColumns();
 
@@ -16,7 +18,7 @@ let indexFile = "";
 for (const [tableName, { columns }] of Object.entries(tables)) {
 	await createFolder(
 		tableName.toLowerCase(),
-		"./src/elysia_template/src/routes",
+		`${DESTINATION_FOLDER}/src/routes`,
 	);
 	const newTemplate = await convertTemplate(tableName, columns);
 	await createNewTemplate(tableName, newTemplate);
