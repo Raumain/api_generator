@@ -8,11 +8,43 @@ export const db = new SQL({
 	connectionTimeout: 30,
 });
 
-export const getTables = async () =>
-	(await db`
-  SELECT table_name
-  FROM information_schema.tables
-  WHERE table_schema = 'public'
-  AND table_type = 'BASE TABLE';
-`) as Array<{ table_name: string }>;
+export const getTablesAndColumns = async () => {
+	const result = await db`
+    SELECT 
+      t.table_name,
+      c.column_name,
+      c.data_type
+    FROM 
+      information_schema.tables AS t
+    LEFT JOIN 
+      information_schema.columns AS c
+    ON 
+      t.table_name = c.table_name
+    WHERE 
+      t.table_schema = 'public'
+    AND 
+      t.table_type = 'BASE TABLE'
+    ORDER BY 
+      t.table_name, c.ordinal_position;
+  `;
 
+	// Group results by table
+	const tables: Record<
+		string,
+		{ columns: Array<{ column_name: string; data_type: string }> }
+	> = {};
+
+	for (const row of result) {
+		const { table_name, column_name, data_type } = row;
+		if (!tables[table_name]) {
+			tables[table_name] = { columns: [] };
+		}
+		if (column_name && data_type) {
+			tables[table_name].columns.push({ column_name, data_type });
+		}
+	}
+
+	return tables;
+};
+
+console.log(await getTablesAndColumns());

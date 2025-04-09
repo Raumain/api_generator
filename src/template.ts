@@ -1,31 +1,24 @@
+import { type Static, Type } from "@sinclair/typebox";
 import { Elysia, t } from "elysia";
-import { Type, type Static } from "@sinclair/typebox";
 import { db } from "../../db";
 
-const projectSchema = t.Object({
-	name: t.String(),
-	description: t.Nullable(t.String()),
-	status: t.Union([
-		t.Literal("active"),
-		t.Literal("on_hold"),
-		t.Literal("completed"),
-	]),
-	start_date: t.Date(),
-	end_date: t.Nullable(t.Date()),
-	created_by: t.String(),
-	updated_by: t.String(),
+const __TABLE__Schema = t.Object({
+	__COLUMNS__,
 });
 
-const projectsRouter = new Elysia({ prefix: "/projects" })
+const __TABLE__Router = new Elysia({ prefix: "/__TABLE__" })
 	.get(
 		"/",
 		async () => {
 			try {
-				const projects = await db.selectFrom("projects").selectAll().execute();
-				return { projects };
+				const __TABLE__ = await db
+					.selectFrom("__RAW_TABLE__")
+					.selectAll()
+					.execute();
+				return { __TABLE__ };
 			} catch (error) {
-				console.error("Error fetching projects:", error);
-				return { error: "Failed to fetch projects" };
+				console.error("Error fetching __TABLE__:", error);
+				return { error: "Failed to fetch __TABLE__" };
 			}
 		},
 		{},
@@ -34,20 +27,20 @@ const projectsRouter = new Elysia({ prefix: "/projects" })
 		"/:id",
 		async ({ params }) => {
 			try {
-				const project = await db
-					.selectFrom("projects")
+				const __TABLE__ = await db
+					.selectFrom("__RAW_TABLE__")
 					.selectAll()
 					.where("id", "=", params.id)
 					.executeTakeFirst();
 
-				if (!project) {
-					return { error: "Project not found" };
+				if (!__TABLE__) {
+					return { error: "__TABLE__ not found" };
 				}
 
-				return { project };
+				return { __TABLE__ };
 			} catch (error) {
-				console.error("Error fetching project:", error);
-				return { error: "Failed to fetch project" };
+				console.error("Error fetching __TABLE__:", error);
+				return { error: "Failed to fetch __TABLE__" };
 			}
 		},
 		{
@@ -58,22 +51,22 @@ const projectsRouter = new Elysia({ prefix: "/projects" })
 	)
 	.post(
 		"/",
-		async ({ body }: { body: Static<typeof projectSchema> }) => {
+		async ({ body }: { body: Static<typeof __TABLE__Schema> }) => {
 			try {
-				const newProject = await db
-					.insertInto("projects")
+				const __TABLE__ = await db
+					.insertInto("__RAW_TABLE__")
 					.values(body)
 					.returning("id")
 					.executeTakeFirst();
 
-				return { message: "Project created successfully", id: newProject?.id };
+				return { message: "__TABLE__ created successfully", id: __TABLE__?.id };
 			} catch (error) {
-				console.error("Error creating project:", error);
-				return { error: "Failed to create project" };
+				console.error("Error creating __TABLE__:", error);
+				return { error: "Failed to create __TABLE__" };
 			}
 		},
 		{
-			body: projectSchema,
+			body: __TABLE__Schema,
 		},
 	)
 	.put(
@@ -83,38 +76,41 @@ const projectsRouter = new Elysia({ prefix: "/projects" })
 			body,
 		}: {
 			params: { id: string };
-			body: Partial<Static<typeof projectSchema>>;
+			body: Partial<Static<typeof __TABLE__Schema>>;
 		}) => {
 			try {
 				await db
-					.updateTable("projects")
+					.updateTable("__RAW_TABLE__")
 					.set(body)
 					.where("id", "=", params.id)
 					.execute();
 
-				return { message: "Project updated successfully" };
+				return { message: "__TABLE__ updated successfully" };
 			} catch (error) {
-				console.error("Error updating project:", error);
-				return { error: "Failed to update project" };
+				console.error("Error updating __TABLE__:", error);
+				return { error: "Failed to update __TABLE__" };
 			}
 		},
 		{
 			params: t.Object({
 				id: t.String(),
 			}),
-			body: t.Partial(projectSchema),
+			body: t.Partial(__TABLE__Schema),
 		},
 	)
 	.delete(
 		"/:id",
 		async ({ params }) => {
 			try {
-				await db.deleteFrom("projects").where("id", "=", params.id).execute();
+				await db
+					.deleteFrom("__RAW_TABLE__")
+					.where("id", "=", params.id)
+					.execute();
 
-				return { message: "Project deleted successfully" };
+				return { message: "__TABLE__ deleted successfully" };
 			} catch (error) {
-				console.error("Error deleting project:", error);
-				return { error: "Failed to delete project" };
+				console.error("Error deleting __TABLE__:", error);
+				return { error: "Failed to delete __TABLE__" };
 			}
 		},
 		{
@@ -124,4 +120,4 @@ const projectsRouter = new Elysia({ prefix: "/projects" })
 		},
 	);
 
-export default projectsRouter;
+export default __TABLE__Router;
