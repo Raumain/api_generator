@@ -17,8 +17,10 @@ This project was created using `bun init` in bun v1.2.7. [Bun](https://bun.sh) i
 
 ## To do
 
-- [ ] Connect to a database
-- [ ] Read tables from public schema
-- [ ] Copy template project into destination
-- [ ] Generate corresponding folder structure based on the database tables
+- [x] Connect to a database
+- [x] Read tables from public schema
+- [x] Copy template project into destination
+- [x] Generate corresponding folder structure based on the database tables
+- [x] Create routers for each table
+- [ ] Create repositories for each table
 
