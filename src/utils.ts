@@ -70,7 +70,7 @@ export const convertTemplate = async (
 	tableName: string,
 	columns: Array<{ column_name: string; data_type: string }>,
 ) => {
-	const template = Bun.file("src/template.ts");
+	const template = Bun.file("src/elysiaRouterTemplate.ts");
 	const templateContent = await template.text();
 	const columnDefinitions = columns
 		.map(({ column_name, data_type }) => {
