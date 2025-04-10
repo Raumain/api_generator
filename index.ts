@@ -1,6 +1,8 @@
 import { copyFile, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import prompts from "prompts";
-import { getTablesAndColumns } from "./database";
+import { getTablesAndColumns } from "./database.js";
 import {
 	convertTemplate,
 	copyFolder,
@@ -8,25 +10,13 @@ import {
 	createNewIndex,
 	createNewTemplate,
 	pgTypeToTs,
-} from "./src/utils";
+} from "./src/utils.js";
 
-async function main() {
-	const { DESTINATION_FOLDER } = await prompts({
-		type: "text",
-		name: "DESTINATION_FOLDER",
-		message: "Choose a destination path:",
-		initial: ".",
-		validate: (value) => {
-			if (!value) {
-				return "Destination folder is required.";
-			}
-			if (value.includes(" ")) {
-				return "Destination folder cannot contain spaces.";
-			}
-			return true;
-		},
-	});
+// Get the directory name of the current module for relative paths
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+export async function main(destinationFolder: string) {
+	// Prompt for user choices
 	const { runtime } = await prompts({
 		type: "select",
 		name: "runtime",
@@ -48,35 +38,25 @@ async function main() {
 		choices: [{ title: "Kysely", value: "kysely" }],
 	});
 
-	if (!DESTINATION_FOLDER) {
-		console.error("Destination folder is required.");
-		process.exit(1);
-	}
-	if (!runtime) {
-		console.error("Runtime is required.");
-		process.exit(1);
-	}
-	if (!httpServer) {
-		console.error("HTTP server is required.");
-		process.exit(1);
-	}
-	if (!queryBuilder) {
-		console.error("Query builder is required.");
-		process.exit(1);
-	}
-
 	// Log user choices
 	console.log("User choices:");
 	console.log(`Runtime: ${runtime}`);
 	console.log(`HTTP Server: ${httpServer}`);
 	console.log(`Query Builder: ${queryBuilder}`);
 
-	// Continue with the existing functionality
-	await copyFolder(DESTINATION_FOLDER, "./elysia_template", DESTINATION_FOLDER);
-	await copyFile(
-		`./src/template_files/${httpServer}/${queryBuilder}/db.ts`,
-		`${DESTINATION_FOLDER}/src/db.ts`,
+	// Use template paths based on user choices
+	const templatePath = path.join(__dirname, "elysia_template");
+	const dbTemplatePath = path.join(
+		__dirname,
+		"template_files",
+		httpServer.toLowerCase(),
+		queryBuilder.toLowerCase(),
+		"db.ts",
 	);
+
+	// Continue with the existing functionality but use the dynamic paths
+	await copyFolder(templatePath, destinationFolder);
+	await copyFile(dbTemplatePath, path.join(destinationFolder, "src", "db.ts"));
 
 	const tables = await getTablesAndColumns();
 
@@ -86,9 +66,9 @@ async function main() {
 
 	for (const [tableName, { columns }] of Object.entries(tables)) {
 		await createFolder(
-			DESTINATION_FOLDER,
+			destinationFolder,
 			tableName.toLowerCase(),
-			`${DESTINATION_FOLDER}/src/routes`,
+			path.join(destinationFolder, "src", "routes"),
 		);
 
 		const interfaceName = `${tableName.charAt(0).toUpperCase()}${tableName.slice(1)}`;
@@ -102,20 +82,28 @@ async function main() {
 
 		typeFile += "}\n\n";
 
+		// Use the appropriate template path based on user choices
+		const templateBasePath = path.join(
+			__dirname,
+			"template_files",
+			httpServer.toLowerCase(),
+			queryBuilder.toLowerCase(),
+		);
+
 		const { newController, newRepository } = await convertTemplate(
-			DESTINATION_FOLDER,
-			`src/template_files/${httpServer}/${queryBuilder}`,
+			destinationFolder,
+			templateBasePath,
 			tableName,
 			columns,
 		);
 		await createNewTemplate(
-			DESTINATION_FOLDER,
+			destinationFolder,
 			tableName,
 			newController,
 			"controller.ts",
 		);
 		await createNewTemplate(
-			DESTINATION_FOLDER,
+			destinationFolder,
 			tableName,
 			newRepository,
 			"repository.ts",
@@ -123,18 +111,21 @@ async function main() {
 		indexFile += `import ${tableName.charAt(0).toLowerCase()}${tableName.slice(1)}Router from "./${tableName.toLowerCase()}/controller";\n`;
 	}
 
-	await createNewIndex(DESTINATION_FOLDER, tables, indexFile);
+	await createNewIndex(destinationFolder, tables, indexFile);
 
 	typeFile += "export interface Database {\n";
 	for (const [tableName, interfaceName] of Object.entries(interfaceNames)) {
 		typeFile += `  ${tableName}: ${interfaceName};\n`;
 	}
 	typeFile += "}\n\n";
-	await writeFile(`${DESTINATION_FOLDER}/src/types.ts`, typeFile);
+	await writeFile(path.join(destinationFolder, "src", "types.ts"), typeFile);
 }
 
-// Execute the main function
-main().catch((error) => {
-	console.error("Error:", error);
-	process.exit(1);
-});
+// Only run if this file is executed directly
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+	const targetDir = process.argv[2] || ".";
+	main(path.resolve(process.cwd(), targetDir)).catch((error) => {
+		console.error("Error:", error);
+		process.exit(1);
+	});
+}

@@ -20,11 +20,7 @@ async function cleanupDestination(DESTINATION_FOLDER: string) {
  * @param src Source folder path
  * @param dest Destination folder path
  */
-export async function copyFolder(
-	DESTINATION_FOLDER: string,
-	src: string,
-	dest: string,
-) {
+export async function copyFolder(src: string, dest: string) {
 	try {
 		try {
 			const destStats = await fs.stat(dest);
@@ -53,7 +49,7 @@ export async function copyFolder(
 			const destPath = path.join(dest, entry.name);
 
 			if (entry.isDirectory()) {
-				await copyFolder(DESTINATION_FOLDER, srcPath, destPath);
+				await copyFolder(srcPath, destPath);
 			} else {
 				await fs.copyFile(srcPath, destPath);
 			}
@@ -65,7 +61,7 @@ export async function copyFolder(
 		if (error instanceof Error && error.message.includes("not empty")) {
 			console.error("Please remove it before proceeding.");
 		} else {
-			await cleanupDestination(DESTINATION_FOLDER);
+			await cleanupDestination(dest);
 		}
 		throw error;
 	}
@@ -176,12 +172,13 @@ export const convertTemplate = async (
 	columns: Array<{ column_name: string; data_type: string }>,
 ) => {
 	try {
-		const controller = Bun.file(`${basePath}/controller.ts`);
-		const repository = Bun.file(`${basePath}/repository.ts`);
+		// Changed from Bun.file to fs.readFile for Node.js compatibility
+		const controllerPath = path.join(basePath, "controller.ts");
+		const repositoryPath = path.join(basePath, "repository.ts");
 
 		const [controllerContent, repositoryContent] = await Promise.all([
-			controller.text(),
-			repository.text(),
+			fs.readFile(controllerPath, "utf-8"),
+			fs.readFile(repositoryPath, "utf-8"),
 		]).catch((error) => {
 			throw new Error(
 				`Failed to read template files: ${error instanceof Error ? error.message : String(error)}`,

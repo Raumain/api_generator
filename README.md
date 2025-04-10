@@ -1,26 +1,30 @@
-# api_generator
+# create-api-generator
 
-To install dependencies:
+A CLI tool to quickly generate API boilerplate with configurable runtime, server, and ORM options.
 
-```bash
-bun install
-```
-
-To run:
+## Usage
 
 ```bash
-bun run index.ts
+npx create-api-generator my-api-project
 ```
 
-This project was created using `bun init` in bun v1.2.7. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+The tool will guide you through selecting:
+- Runtime (Bun)
+- HTTP Server (Elysia)
+- ORM/Query Builder (Kysely)
 
+## Features
 
-## To do
+- Interactive CLI prompts for configuration
+- Generates typed database interfaces
+- Creates controllers and repositories for all your database tables
+- Sets up a complete project structure
 
-- [x] Connect to a database
-- [x] Read tables from public schema
-- [x] Copy template project into destination
-- [x] Generate corresponding folder structure based on the database tables
-- [x] Create routers for each table
-- [ ] Create repositories for each table
+## Requirements
+
+- Node.js 16+ or Bun
+
+## License
+
+MIT
 

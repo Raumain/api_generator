@@ -1,16 +1,29 @@
 {
-	"name": "api_generator",
+	"name": "create-api-generator",
+	"version": "0.0.1",
+	"description": "CLI tool to generate API boilerplate with configurable runtime, server and ORM options",
 	"module": "index.ts",
 	"type": "module",
-	"private": true,
+	"private": false,
+	"bin": {
+		"create-api-generator": "./bin/cli.js"
+	},
+	"files": ["bin", "dist", "src", "templates"],
+	"scripts": {
+		"build": "bun build ./index.ts --outdir ./dist --target node --format esm && cp -r elysia_template ./dist && cp -r src/template_files ./dist",
+		"prepublishOnly": "bun run build"
+	},
+	"keywords": ["api", "generator", "cli", "elysia", "kysely", "bun"],
 	"devDependencies": {
-		"@types/bun": "latest"
+		"@types/bun": "latest",
+    "@types/pg": "^8.11.11",
+		"@types/prompts": "^2.4.9"
 	},
 	"peerDependencies": {
 		"typescript": "^5"
 	},
 	"dependencies": {
-		"@types/prompts": "^2.4.9",
+		"pg": "^8.14.1",
 		"prompts": "^2.4.2"
 	}
 }

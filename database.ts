@@ -1,15 +1,19 @@
-import { SQL } from "bun";
+import { Pool } from "pg";
 
-export const db = new SQL({
-	url: "postgres://your_user:your_password@localhost:5432/your_database",
+// Create a connection pool using pg
+export const db = new Pool({
+	user: "your_user",
+	password: "your_password",
+	host: "localhost",
+	port: 5432,
+	database: "your_database",
 	max: 20,
-	idleTimeout: 30,
-	maxLifetime: 0,
-	connectionTimeout: 30,
+	idleTimeoutMillis: 30000, // 30 seconds in milliseconds
+	connectionTimeoutMillis: 30000, // 30 seconds in milliseconds
 });
 
 export const getTablesAndColumns = async () => {
-	const result = await db`
+	const query = `
     SELECT 
       t.table_name,
       c.column_name,
@@ -29,13 +33,22 @@ export const getTablesAndColumns = async () => {
       t.table_name, c.ordinal_position;
   `;
 
+	// Use pg's query method instead of tagged template literals
+	const { rows } = await db.query(query);
+
 	// Group results by table
 	const tables: Record<
 		string,
-		{ columns: Array<{ column_name: string; data_type: string; is_nullable: "YES" | "NO" }> }
+		{
+			columns: Array<{
+				column_name: string;
+				data_type: string;
+				is_nullable: "YES" | "NO";
+			}>;
+		}
 	> = {};
 
-	for (const row of result) {
+	for (const row of rows) {
 		const { table_name, column_name, data_type, is_nullable } = row;
 		if (!tables[table_name]) {
 			tables[table_name] = { columns: [] };
