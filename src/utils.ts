@@ -1,11 +1,10 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { DESTINATION_FOLDER } from "..";
 
 /**
  * Helper function to clean up the destination folder in case of an error
  */
-async function cleanupDestination() {
+async function cleanupDestination(DESTINATION_FOLDER: string) {
 	try {
 		console.log(`Cleaning up destination folder: ${DESTINATION_FOLDER}`);
 		await fs.rm(DESTINATION_FOLDER, { recursive: true, force: true });
@@ -21,7 +20,11 @@ async function cleanupDestination() {
  * @param src Source folder path
  * @param dest Destination folder path
  */
-export async function copyFolder(src: string, dest: string) {
+export async function copyFolder(
+	DESTINATION_FOLDER: string,
+	src: string,
+	dest: string,
+) {
 	try {
 		try {
 			const destStats = await fs.stat(dest);
@@ -50,7 +53,7 @@ export async function copyFolder(src: string, dest: string) {
 			const destPath = path.join(dest, entry.name);
 
 			if (entry.isDirectory()) {
-				await copyFolder(srcPath, destPath);
+				await copyFolder(DESTINATION_FOLDER, srcPath, destPath);
 			} else {
 				await fs.copyFile(srcPath, destPath);
 			}
@@ -62,7 +65,7 @@ export async function copyFolder(src: string, dest: string) {
 		if (error instanceof Error && error.message.includes("not empty")) {
 			console.error("Please remove it before proceeding.");
 		} else {
-			await cleanupDestination();
+			await cleanupDestination(DESTINATION_FOLDER);
 		}
 		throw error;
 	}
@@ -73,7 +76,11 @@ export async function copyFolder(src: string, dest: string) {
  * @param folderName Name of the new folder
  * @param dest Destination path where the folder will be created
  */
-export async function createFolder(folderName: string, dest: string) {
+export async function createFolder(
+	DESTINATION_FOLDER: string,
+	folderName: string,
+	dest: string,
+) {
 	try {
 		const folderPath = path.join(dest, folderName);
 		await fs.mkdir(folderPath, { recursive: true });
@@ -82,7 +89,7 @@ export async function createFolder(folderName: string, dest: string) {
 		console.error(
 			`Error creating folder ${folderName} at ${dest}: ${error instanceof Error ? error.message : String(error)}`,
 		);
-		await cleanupDestination();
+		await cleanupDestination(DESTINATION_FOLDER);
 		throw error;
 	}
 }
@@ -162,18 +169,15 @@ export function pgTypeToTs(pgType: string): string {
 	}
 }
 
-
 export const convertTemplate = async (
+	DESTINATION_FOLDER: string,
+	basePath: string,
 	tableName: string,
 	columns: Array<{ column_name: string; data_type: string }>,
 ) => {
 	try {
-		const controller = Bun.file(
-			"src/template_files/elysia/kysely/controller.ts",
-		);
-		const repository = Bun.file(
-			"src/template_files/elysia/kysely/repository.ts",
-		);
+		const controller = Bun.file(`${basePath}/controller.ts`);
+		const repository = Bun.file(`${basePath}/repository.ts`);
 
 		const [controllerContent, repositoryContent] = await Promise.all([
 			controller.text(),
@@ -213,12 +217,13 @@ export const convertTemplate = async (
 		console.error(
 			`Error converting template for table ${tableName}: ${error instanceof Error ? error.message : String(error)}`,
 		);
-		await cleanupDestination();
+		await cleanupDestination(DESTINATION_FOLDER);
 		throw error;
 	}
 };
 
 export const createNewTemplate = async (
+	DESTINATION_FOLDER: string,
 	tableName: string,
 	newTemplate: string,
 	filename: string,
@@ -238,12 +243,13 @@ export const createNewTemplate = async (
 		console.error(
 			`Error creating new template for ${tableName}/${filename}: ${error instanceof Error ? error.message : String(error)}`,
 		);
-		await cleanupDestination();
+		await cleanupDestination(DESTINATION_FOLDER);
 		throw error;
 	}
 };
 
 export const createNewIndex = async (
+	DESTINATION_FOLDER: string,
 	tables: Record<
 		string,
 		{
@@ -278,7 +284,7 @@ export const createNewIndex = async (
 		console.error(
 			`Error creating index file: ${error instanceof Error ? error.message : String(error)}`,
 		);
-		await cleanupDestination();
+		await cleanupDestination(DESTINATION_FOLDER);
 		throw error;
 	}
 };
