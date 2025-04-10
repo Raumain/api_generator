@@ -130,6 +130,39 @@ export function pgTypeToTypebox(pgType: string) {
 	}
 }
 
+export function pgTypeToTs(pgType: string): string {
+	switch (pgType) {
+		case "uuid":
+		case "character varying":
+		case "varchar":
+		case "text":
+		case "char":
+		case "name":
+			return "string";
+		case "integer":
+		case "smallint":
+		case "bigint":
+		case "real":
+		case "numeric":
+		case "double precision":
+			return "number";
+		case "boolean":
+			return "boolean";
+		case "json":
+		case "jsonb":
+			return "any";
+		case "date":
+		case "timestamp without time zone":
+		case "timestamp with time zone":
+			return "string"; // Or consider 'Date' if you parse it
+		case "bytea":
+			return "Buffer";
+		default:
+			return "unknown";
+	}
+}
+
+
 export const convertTemplate = async (
 	tableName: string,
 	columns: Array<{ column_name: string; data_type: string }>,
@@ -168,6 +201,7 @@ export const convertTemplate = async (
 			.replaceAll(/__COLUMNS__/g, columnDefinitions);
 
 		const newRepository = repositoryContent
+			.replaceAll(/__TABLE__/g, tableName.toLowerCase())
 			.replaceAll(
 				/__CAP_TABLE__/g,
 				tableName.charAt(0).toUpperCase() + tableName.slice(1).toLowerCase(),

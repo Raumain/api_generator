@@ -1,4 +1,4 @@
-import { copyFile } from "node:fs/promises";
+import { copyFile, writeFile } from "node:fs/promises";
 import { getTablesAndColumns } from "./database";
 import {
 	convertTemplate,
@@ -6,9 +6,10 @@ import {
 	createFolder,
 	createNewIndex,
 	createNewTemplate,
+	pgTypeToTs,
 } from "./src/utils";
 
-export const DESTINATION_FOLDER = "./src/elysia_template";
+export const DESTINATION_FOLDER = "/home/romain/WRK/elysia_template";
 
 await copyFolder("./elysia_template", DESTINATION_FOLDER);
 await copyFile(
@@ -18,13 +19,27 @@ await copyFile(
 
 const tables = await getTablesAndColumns();
 
-let indexFile = "";
+let indexFile = "import { Elysia } from 'elysia';\n";
+let typeFile = "// Auto-generated database types\n\n";
+const interfaceNames: Record<string, string> = {};
 
 for (const [tableName, { columns }] of Object.entries(tables)) {
 	await createFolder(
 		tableName.toLowerCase(),
 		`${DESTINATION_FOLDER}/src/routes`,
 	);
+
+	const interfaceName = `${tableName.charAt(0).toUpperCase()}${tableName.slice(1)}`;
+	interfaceNames[tableName] = interfaceName;
+	typeFile += `export interface ${tableName.charAt(0).toUpperCase()}${tableName.slice(1)} {\n`;
+	for (const { column_name, data_type, is_nullable } of columns) {
+		const tsType = pgTypeToTs(data_type);
+		const optional = is_nullable === "YES" ? "?" : "";
+		typeFile += ` ${column_name}${optional}: ${tsType};\n`;
+	}
+
+	typeFile += "}\n\n";
+
 	const { newController, newRepository } = await convertTemplate(
 		tableName,
 		columns,
@@ -35,3 +50,10 @@ for (const [tableName, { columns }] of Object.entries(tables)) {
 }
 
 await createNewIndex(tables, indexFile);
+
+typeFile += "export interface Database {\n";
+for (const [tableName, interfaceName] of Object.entries(interfaceNames)) {
+	typeFile += `  ${tableName}: ${interfaceName};\n`;
+}
+typeFile += "}\n\n";
+await writeFile(`${DESTINATION_FOLDER}/src/types.ts`, typeFile);

@@ -13,7 +13,8 @@ export const getTablesAndColumns = async () => {
     SELECT 
       t.table_name,
       c.column_name,
-      c.data_type
+      c.data_type,
+      c.is_nullable
     FROM 
       information_schema.tables AS t
     LEFT JOIN 
@@ -31,16 +32,16 @@ export const getTablesAndColumns = async () => {
 	// Group results by table
 	const tables: Record<
 		string,
-		{ columns: Array<{ column_name: string; data_type: string }> }
+		{ columns: Array<{ column_name: string; data_type: string; is_nullable: "YES" | "NO" }> }
 	> = {};
 
 	for (const row of result) {
-		const { table_name, column_name, data_type } = row;
+		const { table_name, column_name, data_type, is_nullable } = row;
 		if (!tables[table_name]) {
 			tables[table_name] = { columns: [] };
 		}
 		if (column_name && data_type) {
-			tables[table_name].columns.push({ column_name, data_type });
+			tables[table_name].columns.push({ column_name, data_type, is_nullable });
 		}
 	}
 

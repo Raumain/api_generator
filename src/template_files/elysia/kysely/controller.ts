@@ -25,10 +25,7 @@ const __TABLE__Router = new Elysia({ prefix: "/__TABLE__" })
 			}
 		},
 		{
-			response: t.Object({
-				__TABLE__: t.Array(__TABLE__Schema),
-			}),
-			responseStatus: {
+			response: {
 				200: t.Object({
 					__TABLE__: t.Array(__TABLE__Schema),
 				}),
@@ -58,10 +55,7 @@ const __TABLE__Router = new Elysia({ prefix: "/__TABLE__" })
 			params: t.Object({
 				id: t.String(),
 			}),
-			response: t.Object({
-				__TABLE__: __TABLE__Schema,
-			}),
-			responseStatus: {
+			response: {
 				200: t.Object({
 					__TABLE__: __TABLE__Schema,
 				}),
@@ -80,6 +74,10 @@ const __TABLE__Router = new Elysia({ prefix: "/__TABLE__" })
 			try {
 				const __TABLE__ = await create__CAP_TABLE__(body);
 
+				if (!__TABLE__) {
+					return { error: "__TABLE__ not created" };
+				}
+
 				return { id: __TABLE__.id };
 			} catch (error) {
 				console.error("Error creating __TABLE__:", error);
@@ -88,10 +86,7 @@ const __TABLE__Router = new Elysia({ prefix: "/__TABLE__" })
 		},
 		{
 			body: __TABLE__Schema,
-			response: t.Object({
-				id: t.String(),
-			}),
-			responseStatus: {
+			response: {
 				200: t.Object({
 					id: t.String(),
 				}),
@@ -130,10 +125,7 @@ const __TABLE__Router = new Elysia({ prefix: "/__TABLE__" })
 				id: t.String(),
 			}),
 			body: t.Partial(__TABLE__Schema),
-			response: t.Object({
-				id: t.String(),
-			}),
-			responseStatus: {
+			response: {
 				200: t.Object({
 					id: t.String(),
 				}),
@@ -168,10 +160,7 @@ const __TABLE__Router = new Elysia({ prefix: "/__TABLE__" })
 			params: t.Object({
 				id: t.String(),
 			}),
-			response: t.Object({
-				id: t.String(),
-			}),
-			responseStatus: {
+			response: {
 				200: t.Object({
 					id: t.String(),
 				}),
