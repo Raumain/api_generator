@@ -23,6 +23,25 @@ async function cleanupDestination() {
  */
 export async function copyFolder(src: string, dest: string) {
 	try {
+		try {
+			const destStats = await fs.stat(dest);
+
+			if (destStats.isDirectory()) {
+				// Check if the directory is not empty
+				const files = await fs.readdir(dest);
+				if (files.length > 0) {
+					throw new Error(
+						`Destination folder ${dest} already exists and is not empty`,
+					);
+				}
+			}
+		} catch (error) {
+			const err = error as NodeJS.ErrnoException;
+			if (err.code !== "ENOENT") {
+				throw error; // If it's not a "not found" error, rethrow it
+			}
+		}
+
 		await fs.mkdir(dest, { recursive: true });
 		const entries = await fs.readdir(src, { withFileTypes: true });
 
@@ -40,7 +59,11 @@ export async function copyFolder(src: string, dest: string) {
 		console.error(
 			`Error copying folder from ${src} to ${dest}: ${error instanceof Error ? error.message : String(error)}`,
 		);
-		await cleanupDestination();
+		if (error instanceof Error && error.message.includes("not empty")) {
+			console.error("Please remove it before proceeding.");
+		} else {
+			await cleanupDestination();
+		}
 		throw error;
 	}
 }
