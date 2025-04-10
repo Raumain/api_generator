@@ -71,29 +71,42 @@ export const convertTemplate = async (
 	tableName: string,
 	columns: Array<{ column_name: string; data_type: string }>,
 ) => {
-	const template = Bun.file("src/elysiaRouterTemplate.ts");
-	const templateContent = await template.text();
+	const controller = Bun.file("src/template_files/elysia/kysely/controller.ts");
+	const repository = Bun.file("src/template_files/elysia/kysely/repository.ts");
+	const controllerContent = await controller.text();
+	const repositoryContent = await repository.text();
 	const columnDefinitions = columns
 		.map(({ column_name, data_type }) => {
 			const typeboxType = pgTypeToTypebox(data_type);
 			return `\t${column_name}: ${typeboxType}`;
 		})
 		.join(",\n");
-	const newContent = templateContent
+	const newController = controllerContent
 		.replaceAll(/__TABLE__/g, tableName.toLowerCase())
+		.replaceAll(
+			/__CAP_TABLE__/g,
+			tableName.charAt(0).toUpperCase() + tableName.slice(1).toLowerCase(),
+		)
 		.replaceAll(/__RAW_TABLE__/g, tableName)
 		.replaceAll(/__COLUMNS__/g, columnDefinitions);
-	return newContent;
+	const newRepository = repositoryContent
+		.replaceAll(
+			/__CAP_TABLE__/g,
+			tableName.charAt(0).toUpperCase() + tableName.slice(1).toLowerCase(),
+		)
+		.replaceAll(/__RAW_TABLE__/g, tableName);
+	return { newController, newRepository };
 };
 
 export const createNewTemplate = async (
 	tableName: string,
 	newTemplate: string,
+	filename: string,
 ) => {
 	const newFileName = path.join(
 		`${DESTINATION_FOLDER}/src/routes`,
 		tableName.toLowerCase(),
-		"controller.ts",
+		filename,
 	);
 	await fs.appendFile(newFileName, newTemplate);
 };
