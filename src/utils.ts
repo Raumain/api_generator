@@ -1,10 +1,11 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { pgTypeToTypebox } from "./utils/types/postgres";
 
 /**
  * Helper function to clean up the destination folder in case of an error
  */
-async function cleanupDestination(DESTINATION_FOLDER: string) {
+export async function cleanupDestination(DESTINATION_FOLDER: string) {
 	try {
 		console.log(`Cleaning up destination folder: ${DESTINATION_FOLDER}`);
 		await fs.rm(DESTINATION_FOLDER, { recursive: true, force: true });
@@ -72,18 +73,13 @@ export async function copyFolder(src: string, dest: string) {
  * @param folderName Name of the new folder
  * @param dest Destination path where the folder will be created
  */
-export async function createFolder(
-	DESTINATION_FOLDER: string,
-	folderName: string,
-	dest: string,
-) {
+export async function createFolder(DESTINATION_FOLDER: string, dest: string) {
 	try {
-		const folderPath = path.join(dest, folderName);
-		await fs.mkdir(folderPath, { recursive: true });
-		return folderPath;
+		await fs.mkdir(dest, { recursive: true });
+		return dest;
 	} catch (error) {
 		console.error(
-			`Error creating folder ${folderName} at ${dest}: ${error instanceof Error ? error.message : String(error)}`,
+			`Error creating ${dest}: ${error instanceof Error ? error.message : String(error)}`,
 		);
 		await cleanupDestination(DESTINATION_FOLDER);
 		throw error;
@@ -91,91 +87,27 @@ export async function createFolder(
 }
 
 /**
- * Converts PostgreSQL types to TypeBox types.
+ * Converts template files for a specific table.
+ * @param DESTINATION_FOLDER Destination folder path
+ * @param controllerPath Path to the controller template
+ * @param repositoryPath Path to the repository template
+ * @param columns Array of column definitions for the table
+ * @param tableName Name of the table
  */
-export function pgTypeToTypebox(pgType: string) {
+export const convertTemplate = async ({
+	DESTINATION_FOLDER,
+	controllerPath,
+	repositoryPath,
+	columns,
+	tableName,
+}: {
+	DESTINATION_FOLDER: string;
+	controllerPath: string;
+	repositoryPath: string;
+	tableName: string;
+	columns: Array<{ column_name: string; data_type: string }>;
+}) => {
 	try {
-		switch (pgType) {
-			case "uuid":
-			case "character varying":
-			case "varchar":
-			case "text":
-			case "bytea":
-				return "t.String()";
-			case "integer":
-			case "smallint":
-			case "bigint":
-				return "t.Integer()";
-			case "numeric":
-			case "real":
-			case "double precision":
-				return "t.Number()";
-			case "boolean":
-				return "t.Boolean()";
-			case "date":
-			case "timestamp without time zone":
-			case "timestamp with time zone":
-				return 't.String({ format: "date-time" })';
-			case "json":
-			case "jsonb":
-				return "t.Any()";
-			default:
-				console.warn(
-					`Unknown PostgreSQL type: ${pgType}, defaulting to t.Unknown()`,
-				);
-				return "t.Unknown()";
-		}
-	} catch (error) {
-		console.error(
-			`Error converting PostgreSQL type ${pgType}: ${error instanceof Error ? error.message : String(error)}`,
-		);
-		throw error;
-	}
-}
-
-export function pgTypeToTs(pgType: string): string {
-	switch (pgType) {
-		case "uuid":
-		case "character varying":
-		case "varchar":
-		case "text":
-		case "char":
-		case "name":
-			return "string";
-		case "integer":
-		case "smallint":
-		case "bigint":
-		case "real":
-		case "numeric":
-		case "double precision":
-			return "number";
-		case "boolean":
-			return "boolean";
-		case "json":
-		case "jsonb":
-			return "any";
-		case "date":
-		case "timestamp without time zone":
-		case "timestamp with time zone":
-			return "string"; // Or consider 'Date' if you parse it
-		case "bytea":
-			return "Buffer";
-		default:
-			return "unknown";
-	}
-}
-
-export const convertTemplate = async (
-	DESTINATION_FOLDER: string,
-	basePath: string,
-	tableName: string,
-	columns: Array<{ column_name: string; data_type: string }>,
-) => {
-	try {
-		// Changed from Bun.file to fs.readFile for Node.js compatibility
-		const controllerPath = path.join(basePath, "controller.ts");
-		const repositoryPath = path.join(basePath, "repository.ts");
-
 		const [controllerContent, repositoryContent] = await Promise.all([
 			fs.readFile(controllerPath, "utf-8"),
 			fs.readFile(repositoryPath, "utf-8"),
@@ -219,6 +151,13 @@ export const convertTemplate = async (
 	}
 };
 
+/**
+ * Creates a new template file for a specific table.
+ * @param DESTINATION_FOLDER Destination folder path
+ * @param tableName Name of the table
+ * @param newTemplate Template content to be written
+ * @param filename Name of the file to be created
+ */
 export const createNewTemplate = async (
 	DESTINATION_FOLDER: string,
 	tableName: string,
@@ -245,8 +184,20 @@ export const createNewTemplate = async (
 	}
 };
 
-export const createNewIndex = async (
-	DESTINATION_FOLDER: string,
+/**
+ * Creates routes for each table in the database.
+ * @param destinationFolder Destination folder path
+ * @param tables Tables to create routes for
+ * @param controllerPath Path to the controller template
+ * @param repositoryPath Path to the repository template
+ * */
+export const createRoutes = async ({
+	destinationFolder,
+	tables,
+	controllerPath,
+	repositoryPath,
+}: {
+	destinationFolder: string;
 	tables: Record<
 		string,
 		{
@@ -255,33 +206,34 @@ export const createNewIndex = async (
 				data_type: string;
 			}>;
 		}
-	>,
-	indexFile: string,
-) => {
-	try {
-		let newIndexFile = indexFile;
-		newIndexFile += `export const app = new Elysia({ prefix: "/api" })\n`;
-
-		for (const [tableName] of Object.entries(tables)) {
-			newIndexFile += `.use(${tableName.charAt(0).toLowerCase()}${tableName.slice(1)}Router)\n`;
-		}
-
-		newIndexFile += "export default app;\n";
-
-		// Ensure the directory exists
-		const indexDir = path.dirname(`${DESTINATION_FOLDER}/src/routes/index.ts`);
-		await fs.mkdir(indexDir, { recursive: true });
-
-		await fs.writeFile(
-			`${DESTINATION_FOLDER}/src/routes/index.ts`,
-			newIndexFile,
-			"utf-8",
+	>;
+	controllerPath: string;
+	repositoryPath: string;
+}) => {
+	for (const [tableName, { columns }] of Object.entries(tables)) {
+		await createFolder(
+			destinationFolder,
+			path.join(destinationFolder, "src", "routes", tableName.toLowerCase()),
 		);
-	} catch (error) {
-		console.error(
-			`Error creating index file: ${error instanceof Error ? error.message : String(error)}`,
+
+		const { newController, newRepository } = await convertTemplate({
+			DESTINATION_FOLDER: destinationFolder,
+			controllerPath,
+			repositoryPath,
+			tableName,
+			columns,
+		});
+		await createNewTemplate(
+			destinationFolder,
+			tableName,
+			newController,
+			"controller.ts",
 		);
-		await cleanupDestination(DESTINATION_FOLDER);
-		throw error;
+		await createNewTemplate(
+			destinationFolder,
+			tableName,
+			newRepository,
+			"repository.ts",
+		);
 	}
 };
