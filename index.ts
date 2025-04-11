@@ -3,8 +3,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import prompts from "prompts";
 import { getTablesAndColumns } from "./database.js";
-import { copyFolder, createRoutes } from "./src/utils.js";
-import { generateIndexFile } from "./src/utils/index";
+import { copyFolder, createRoutes } from "./src/utils/";
+import { generateIndexFile } from "./src/utils/indexFile";
+import { updatePackages } from "./src/utils/packages/index.js";
 import { generateTypesFile } from "./src/utils/types";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -72,6 +73,13 @@ export async function main(destinationFolder: string) {
 		destinationFolder,
 		database: "postgres",
 		tables,
+	});
+
+	await updatePackages({
+		packagePath: path.join(destinationFolder, "package.json"),
+		httpServer,
+		queryBuilder,
+		database: "postgres",
 	});
 }
 

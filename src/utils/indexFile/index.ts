@@ -1,3 +1,4 @@
+import type { HttpServerType } from "../../types/configTypes";
 import { generateElysia } from "./elysia";
 import { generateExpress } from "./express";
 
@@ -7,7 +8,7 @@ export const generateIndexFile = async ({
 	tables,
 }: {
 	destinationFolder: string;
-	httpServer: "express" | "elysia";
+	httpServer: HttpServerType;
 	tables: Record<
 		string,
 		{

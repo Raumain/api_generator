@@ -1,8 +1,8 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { cleanupDestination } from "../../utils.js";
+import { cleanupDestination } from "../index.js";
 
-export const generateElysia = async ({
+export const generateExpress = async ({
 	destinationFolder,
 	tables,
 }: {
@@ -18,10 +18,11 @@ export const generateElysia = async ({
 		}
 	>;
 }) => {
-	let indexFile = "import { Elysia } from 'elysia';\n";
+	let indexFile = "import express from 'express';\n";
 	for (const [tableName, { columns }] of Object.entries(tables)) {
 		indexFile += `import ${tableName.charAt(0).toLowerCase()}${tableName.slice(1)}Router from "./${tableName.toLowerCase()}/controller";\n`;
 	}
+	indexFile += "const app = express();\n";
 	await createNewIndex({
 		DESTINATION_FOLDER: destinationFolder,
 		tables,
@@ -48,12 +49,13 @@ const createNewIndex = async ({
 }) => {
 	try {
 		let newIndexFile = indexFile;
-		newIndexFile += `const app = new Elysia({ prefix: "/api" })\n`;
+		newIndexFile += `const app = express().use('api', [)\n`;
 
 		for (const [tableName] of Object.entries(tables)) {
-			newIndexFile += `.use(${tableName.charAt(0).toLowerCase()}${tableName.slice(1)}Router)\n`;
+			newIndexFile += `\t${tableName.charAt(0).toLowerCase()}${tableName.slice(1)}Router\n`;
 		}
 
+		newIndexFile += "];\n";
 		newIndexFile += "export default app;\n";
 
 		// Ensure the directory exists

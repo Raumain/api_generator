@@ -16,7 +16,7 @@
 	"keywords": ["api", "generator", "cli", "elysia", "kysely", "bun"],
 	"devDependencies": {
 		"@types/bun": "latest",
-    "@types/pg": "^8.11.11",
+		"@types/pg": "^8.11.11",
 		"@types/prompts": "^2.4.9"
 	},
 	"peerDependencies": {

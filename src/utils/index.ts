@@ -1,6 +1,6 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { pgTypeToTypebox } from "./utils/types/postgres";
+import { pgTypeToTypebox } from "./types/postgres";
 
 /**
  * Helper function to clean up the destination folder in case of an error
