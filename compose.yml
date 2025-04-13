@@ -1,0 +1,11 @@
+services:
+  app:
+    image: oven/bun:latest
+    container_name: bun_app
+    user: bun # Run commands as the bun user
+    command: tail -f /dev/null
+    working_dir: /app
+    volumes:
+      - .:/app # Map current directory to /app in the container
+    ports:
+      - "3001:3001" # Map host port 3000 to container port 3000
