@@ -11,11 +11,48 @@ import { generateTypesFile } from "./src/utils/types";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export async function main(destinationFolder: string) {
-	const { runtime } = await prompts({
+	// const { runtime } = await prompts({
+	// 	type: "select",
+	// 	name: "runtime",
+	// 	message: "Choose a runtime:",
+	// 	choices: [{ title: "Bun", value: "bun" }],
+	// });
+
+	const { database } = await prompts({
 		type: "select",
-		name: "runtime",
-		message: "Choose a runtime:",
-		choices: [{ title: "Bun", value: "bun" }],
+		name: "database",
+		message: "Choose a database:",
+		choices: [{ title: "Postgres", value: "postgres" }],
+	});
+
+	const { db_user } = await prompts({
+		type: "text",
+		name: "db_user",
+		message: "Enter your databaser username:",
+	});
+
+	const { db_password } = await prompts({
+		type: "password",
+		name: "db_password",
+		message: "Enter your database password:",
+	});
+
+	const { db_server } = await prompts({
+		type: "text",
+		name: "db_server",
+		message: "Enter your database server:",
+	});
+
+	const { dp_port } = await prompts({
+		type: "number",
+		name: "dp_port",
+		message: "Enter your database port:",
+	});
+
+	const { db_database } = await prompts({
+		type: "text",
+		name: "db_database",
+		message: "Enter your database name:",
 	});
 
 	const { httpServer } = await prompts({
@@ -54,7 +91,9 @@ export async function main(destinationFolder: string) {
 	await copyFolder(templatePath, destinationFolder);
 	await copyFile(dbTemplatePath, path.join(destinationFolder, "src", "db.ts"));
 
-	const tables = await getTablesAndColumns();
+	const tables = await getTablesAndColumns({
+		connectionString: `postgresql://${db_user}:${db_password}@${db_server}:${dp_port}/${db_database}`,
+	});
 
 	await createRoutes({
 		destinationFolder,

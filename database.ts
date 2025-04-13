@@ -1,19 +1,23 @@
 import { Pool } from "pg";
 
-// Create a connection pool using pg
-export const db = new Pool({
-	user: "your_user",
-	password: "your_password",
-	host: "localhost",
-	port: 5432,
-	database: "your_database",
-	max: 20,
-	idleTimeoutMillis: 30000, // 30 seconds in milliseconds
-	connectionTimeoutMillis: 30000, // 30 seconds in milliseconds
-});
+export const getTablesAndColumns = async ({
+	connectionString,
+}: { connectionString: string }) => {
+	let db = null;
 
-export const getTablesAndColumns = async () => {
-	const query = `
+	try {
+		db = new Pool({
+			connectionString,
+			max: 20,
+			idleTimeoutMillis: 30000, // 30 seconds in milliseconds
+			connectionTimeoutMillis: 30000, // 30 seconds in milliseconds
+		});
+
+		// Test the connection
+		await db.query("SELECT 1");
+		console.log(db.query("SELECT 1"))
+
+		const query = `
     SELECT 
       t.table_name,
       c.column_name,
@@ -33,30 +37,43 @@ export const getTablesAndColumns = async () => {
       t.table_name, c.ordinal_position;
   `;
 
-	// Use pg's query method instead of tagged template literals
-	const { rows } = await db.query(query);
-
-	// Group results by table
-	const tables: Record<
-		string,
-		{
-			columns: Array<{
-				column_name: string;
-				data_type: string;
-				is_nullable: "YES" | "NO";
-			}>;
+		// Use pg's query method instead of tagged template literals
+		const { rows } = await db.query(query);
+		console.log(rows)
+		// Group results by table
+		const tables: Record<
+			string,
+			{
+				columns: Array<{
+					column_name: string;
+					data_type: string;
+					is_nullable: "YES" | "NO";
+				}>;
+			}
+		> = {};
+			
+		for (const row of rows) {
+			const { table_name, column_name, data_type, is_nullable } = row;
+			if (!tables[table_name]) {
+				tables[table_name] = { columns: [] };
+			}
+			if (column_name && data_type) {
+				tables[table_name].columns.push({
+					column_name,
+					data_type,
+					is_nullable,
+				});
+			}
 		}
-	> = {};
-
-	for (const row of rows) {
-		const { table_name, column_name, data_type, is_nullable } = row;
-		if (!tables[table_name]) {
-			tables[table_name] = { columns: [] };
-		}
-		if (column_name && data_type) {
-			tables[table_name].columns.push({ column_name, data_type, is_nullable });
+		console.log(tables)
+		return tables;
+	} catch (error) {
+		console.error("Database error:", error);
+		throw new Error(`Failed to fetch database schema: ${error}`);
+	} finally {
+		// Properly close the connection pool when done
+		if (db) {
+			await db.end();
 		}
 	}
-
-	return tables;
 };
