@@ -1,5 +1,5 @@
-import type { Static } from "@sinclair/typebox";
 import { Elysia, t } from "elysia";
+import { __TABLE__Base, __TABLE__Create } from "../../schemas/__TABLE__";
 import {
 	create__CAP_TABLE__,
 	delete__CAP_TABLE__,
@@ -8,9 +8,6 @@ import {
 	update__CAP_TABLE__,
 } from "./repository";
 
-export const __TABLE__Schema = t.Object({
-	__COLUMNS__,
-});
 
 const __TABLE__Router = new Elysia({ prefix: "/__TABLE__" })
 	.get(
@@ -27,7 +24,7 @@ const __TABLE__Router = new Elysia({ prefix: "/__TABLE__" })
 		{
 			response: {
 				200: t.Object({
-					__TABLE__: t.Array(__TABLE__Schema),
+					__TABLE__: t.Array(__TABLE__Base),
 				}),
 				500: t.Object({
 					error: t.String(),
@@ -57,7 +54,7 @@ const __TABLE__Router = new Elysia({ prefix: "/__TABLE__" })
 			}),
 			response: {
 				200: t.Object({
-					__TABLE__: __TABLE__Schema,
+					__TABLE__: __TABLE__Base,
 				}),
 				404: t.Object({
 					error: t.String(),
@@ -85,7 +82,7 @@ const __TABLE__Router = new Elysia({ prefix: "/__TABLE__" })
 			}
 		},
 		{
-			body: __TABLE__Schema,
+			body: __TABLE__Create,
 			response: {
 				200: t.Object({
 					id: t.String(),
@@ -118,7 +115,7 @@ const __TABLE__Router = new Elysia({ prefix: "/__TABLE__" })
 			params: t.Object({
 				id: t.String(),
 			}),
-			body: t.Partial(__TABLE__Schema),
+			body: t.Partial(__TABLE__Base),
 			response: {
 				200: t.Object({
 					id: t.String(),

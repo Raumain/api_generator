@@ -130,7 +130,6 @@ export const convertTemplate = async ({
 				/__CAP_TABLE__/g,
 				tableName.charAt(0).toUpperCase() + toCamelCase(tableName).slice(1),
 			)
-			.replaceAll(/__RAW_TABLE__/g, tableName)
 			.replaceAll(/__COLUMNS__/g, columnDefinitions);
 
 		const newRepository = repositoryContent
