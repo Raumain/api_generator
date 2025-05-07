@@ -6,6 +6,7 @@ import { getTablesAndColumns } from "./database.js";
 import { copyFolder, createRoutes } from "./src/utils/";
 import { generateIndexFile } from "./src/utils/indexFile";
 import { updatePackages } from "./src/utils/packages/index.js";
+import { generateSchemas } from "./src/utils/schemas/index.js";
 import { generateTypesFile } from "./src/utils/types";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -109,6 +110,12 @@ export async function main(destinationFolder: string) {
 	});
 
 	await generateTypesFile({
+		destinationFolder,
+		database: "postgres",
+		tables,
+	});
+
+	await generateSchemas({
 		destinationFolder,
 		database: "postgres",
 		tables,
