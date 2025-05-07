@@ -1,4 +1,4 @@
-import { writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { toCamelCase } from "..";
 import { pgTypeToTypebox } from "../types/postgres";
@@ -21,6 +21,8 @@ export const generateSchemas = async ({
 		}
 	>;
 }) => {
+	await mkdir(path.join(destinationFolder, "src", "schemas"));
+
 	const generatedCols = [
 		"id",
 		"created_at",
@@ -29,7 +31,8 @@ export const generateSchemas = async ({
 		"updated_by",
 	];
 
-	const generatedData = `export const generatedData = t.Object({
+	const generatedData = `import { t } from "elysia";\n
+export const generatedData = t.Object({
   id: t.String(),
   createdAt: t.String({ format: "date-time", default: () => new Date().toISOString() }),
   createdBy: t.String(),
@@ -39,12 +42,13 @@ export const generateSchemas = async ({
 	await writeFile(
 		path.join(destinationFolder, "src", "schemas", "generated.ts"),
 		generatedData,
+		{ flag: "w+" },
 	);
 
 	for (const [tableName, { columns }] of Object.entries(tables)) {
 		let schema = `import { t } from "elysia";\n`;
 		schema += `import { generatedData } from "./generated";\n\n`;
-		schema = `export const ${tableName}Create = t.Object({\n`;
+		schema += `export const ${toCamelCase(tableName)}Create = t.Object({\n`;
 		for (const { column_name, data_type, is_nullable } of columns) {
 			if (generatedCols.includes(column_name)) {
 				continue;
@@ -71,6 +75,7 @@ export const generateSchemas = async ({
 				`${toCamelCase(tableName)}.ts`,
 			),
 			schema,
+			{ flag: "w+" },
 		);
 	}
 };

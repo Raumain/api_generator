@@ -125,19 +125,19 @@ export const convertTemplate = async ({
 			.join(",\n");
 
 		const newController = controllerContent
-			.replaceAll(/__TABLE__/g, tableName.toLowerCase())
+			.replaceAll(/__TABLE__/g, toCamelCase(tableName))
 			.replaceAll(
 				/__CAP_TABLE__/g,
-				tableName.charAt(0).toUpperCase() + tableName.slice(1).toLowerCase(),
+				tableName.charAt(0).toUpperCase() + toCamelCase(tableName).slice(1),
 			)
 			.replaceAll(/__RAW_TABLE__/g, tableName)
 			.replaceAll(/__COLUMNS__/g, columnDefinitions);
 
 		const newRepository = repositoryContent
-			.replaceAll(/__TABLE__/g, tableName.toLowerCase())
+			.replaceAll(/__TABLE__/g, toCamelCase(tableName))
 			.replaceAll(
 				/__CAP_TABLE__/g,
-				tableName.charAt(0).toUpperCase() + tableName.slice(1).toLowerCase(),
+				tableName.charAt(0).toUpperCase() + toCamelCase(tableName).slice(1),
 			)
 			.replaceAll(/__RAW_TABLE__/g, tableName);
 
@@ -167,7 +167,7 @@ export const createNewTemplate = async (
 	try {
 		const routeDir = path.join(
 			`${DESTINATION_FOLDER}/src/routes`,
-			tableName.toLowerCase(),
+			toCamelCase(tableName),
 		);
 
 		// Ensure directory exists before writing file
@@ -213,7 +213,7 @@ export const createRoutes = async ({
 	for (const [tableName, { columns }] of Object.entries(tables)) {
 		await createFolder(
 			destinationFolder,
-			path.join(destinationFolder, "src", "routes", tableName.toLowerCase()),
+			path.join(destinationFolder, "src", "routes", toCamelCase(tableName)),
 		);
 
 		const { newController, newRepository } = await convertTemplate({
