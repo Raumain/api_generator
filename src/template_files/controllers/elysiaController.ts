@@ -15,13 +15,13 @@ export const __TABLE__Schema = t.Object({
 const __TABLE__Router = new Elysia({ prefix: "/__TABLE__" })
 	.get(
 		"/",
-		async () => {
+		async ({ status }) => {
 			try {
 				const __TABLE__ = await getAll__CAP_TABLE__();
 				return { __TABLE__ };
 			} catch (error) {
 				console.error("Error fetching __TABLE__:", error);
-				return { error: "Failed to fetch __TABLE__" };
+				return status(500, { error: "Failed to fetch __TABLE__" });
 			}
 		},
 		{
@@ -37,18 +37,18 @@ const __TABLE__Router = new Elysia({ prefix: "/__TABLE__" })
 	)
 	.get(
 		"/:id",
-		async ({ params }) => {
+		async ({ params, status }) => {
 			try {
 				const __TABLE__ = await get__CAP_TABLE__ById(params.id);
 
 				if (!__TABLE__) {
-					return { error: "__TABLE__ not found" };
+					return status(404, { error: "__TABLE__ not found" });
 				}
 
 				return { __TABLE__ };
 			} catch (error) {
 				console.error("Error fetching __TABLE__:", error);
-				return { error: "Failed to fetch __TABLE__" };
+				return status(500, { error: "Failed to fetch __TABLE__" });
 			}
 		},
 		{
@@ -70,18 +70,18 @@ const __TABLE__Router = new Elysia({ prefix: "/__TABLE__" })
 	)
 	.post(
 		"/",
-		async ({ body }: { body: Static<typeof __TABLE__Schema> }) => {
+		async ({ body, status }) => {
 			try {
 				const __TABLE__ = await create__CAP_TABLE__(body);
 
 				if (!__TABLE__) {
-					return { error: "__TABLE__ not created" };
+					return status(409, { error: "__TABLE__ not created" });
 				}
 
 				return { id: __TABLE__.id };
 			} catch (error) {
 				console.error("Error creating __TABLE__:", error);
-				return { error: "Failed to create __TABLE__" };
+				return status(500, { error: "Failed to create __TABLE__" });
 			}
 		},
 		{
@@ -90,7 +90,7 @@ const __TABLE__Router = new Elysia({ prefix: "/__TABLE__" })
 				200: t.Object({
 					id: t.String(),
 				}),
-				400: t.Object({
+				409: t.Object({
 					error: t.String(),
 				}),
 				500: t.Object({
@@ -101,23 +101,17 @@ const __TABLE__Router = new Elysia({ prefix: "/__TABLE__" })
 	)
 	.put(
 		"/:id",
-		async ({
-			params,
-			body,
-		}: {
-			params: { id: string };
-			body: Partial<Static<typeof __TABLE__Schema>>;
-		}) => {
+		async ({ params, body, status }) => {
 			try {
 				const __TABLE__ = await update__CAP_TABLE__(params.id, body);
 				if (!__TABLE__) {
-					return { error: "__TABLE__ not found" };
+					return status(404, { error: "__TABLE__ not found" });
 				}
 
 				return { id: __TABLE__.id };
 			} catch (error) {
 				console.error("Error updating __TABLE__:", error);
-				return { error: "Failed to update __TABLE__" };
+				return status(500, { error: "Failed to update __TABLE__" });
 			}
 		},
 		{
@@ -128,9 +122,6 @@ const __TABLE__Router = new Elysia({ prefix: "/__TABLE__" })
 			response: {
 				200: t.Object({
 					id: t.String(),
-				}),
-				400: t.Object({
-					error: t.String(),
 				}),
 				404: t.Object({
 					error: t.String(),
@@ -143,17 +134,17 @@ const __TABLE__Router = new Elysia({ prefix: "/__TABLE__" })
 	)
 	.delete(
 		"/:id",
-		async ({ params }) => {
+		async ({ params, status }) => {
 			try {
 				const __TABLE__ = await delete__CAP_TABLE__(params.id);
 				if (!__TABLE__) {
-					return { error: "__TABLE__ not found" };
+					return status(404, { error: "__TABLE__ not found" });
 				}
 
 				return { id: __TABLE__.id };
 			} catch (error) {
 				console.error("Error deleting __TABLE__:", error);
-				return { error: "Failed to delete __TABLE__" };
+				return status(500, { error: "Failed to delete __TABLE__" });
 			}
 		},
 		{
@@ -163,9 +154,6 @@ const __TABLE__Router = new Elysia({ prefix: "/__TABLE__" })
 			response: {
 				200: t.Object({
 					id: t.String(),
-				}),
-				400: t.Object({
-					error: t.String(),
 				}),
 				404: t.Object({
 					error: t.String(),
